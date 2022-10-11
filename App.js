@@ -1,17 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import {css} from './assets/css/Css';
 import MapView from "react-native-maps";
 import * as Location from 'expo-location';
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete"
 import config from "./config"
-import MapViewDirections from "react-native-maps-directions"
+import MapViewDirections from 'react-native-maps-directions';
 
 export default function App() {
-
-  const [origin, setOrigin]=useState(null);
-  const [destination, setDestination  ]=useState(null);
+  const mapEl=useRef(null);
+  const [origin,setOrigin]=useState(null);
+  const [destination,setDestination]=useState(null);
+  const [distance,setDistance]=useState(null);
 
   useEffect(()=>{
     (async function(){
@@ -36,12 +37,35 @@ export default function App() {
   return (
     <View style={css.container}>
       <MapView
-        style={css.map}
+        style={css.map}Ref
         initialRegion={origin}
         showsUserLocation={true}
         zoomEnabled={true}
         loadingEnabled={true}
+        ref={mapEl}
       >
+        {destination &&
+          <MapViewDirections
+            origin={origin}
+            destination={destination}
+            apikey={config.googleApi}
+            strokeWidth={3}
+            onReady={result=>{
+              console.log(result)
+              setDistance(result.distance);
+              mapEl.current.fitToCoordinates(
+                result.coordinates,{
+                    edgePadding:{
+                        top:50,
+                        bottom:50,
+                        left:50,
+                        right:50
+                    }
+                }
+            );
+          }} 
+        />
+      }
       </MapView>
       <View style={css.search}>
         <GooglePlacesAutocomplete
@@ -53,7 +77,7 @@ export default function App() {
                 latitudeDelta: 0.000922,
                 longitudeDelta: 0.000421
             });
-            console.log("OI");
+
         }}
         query={{
             key: config.googleApi,
